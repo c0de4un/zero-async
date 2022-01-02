@@ -39,14 +39,39 @@
 #include <zero/core/cfg/zero_mutex.hpp>
 #endif /// !ZERO_MUTEX_HPP
 
+// Include STL
+#include <chrono>
+#include <string>
+#include <thread>
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // UNITS
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-TEST(zero_async, mutex_test) {
-	// @TODO:
-	const bool test_val(true);
-	EXPECT_EQ(test_val, true);
+static std::string testData("empty");
+static zMutex mutex;
+static void changeDataThread1(const std::string& data)
+{
+	mutex.lock();
+	testData = data;
+	std::this_thread::sleep_for(std::chrono::seconds(5));
+}
+
+static void changeDataThread2(const std::string& data)
+{
+	mutex.lock();
+	testData = data;
+}
+
+TEST(zero_async, mutex_lock_test) {
+	std::thread t1(changeDataThread1, "thread1");
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+	std::thread t2(changeDataThread2, "thread2");
+	EXPECT_EQ(testData == "thread1", true);
+	EXPECT_EQ(mutex.isLocked(), true);
+
+	t1.join();
+	t2.join();
 }
 
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
