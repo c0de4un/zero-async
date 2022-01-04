@@ -39,6 +39,11 @@
 #include <zero/core/cfg/zero_mutex.hpp>
 #endif /// !ZERO_MUTEX_HPP
 
+// Include zero::SpinLock
+#ifndef ZERO_CORE_SPIN_LOCK_HPP
+#include <zero/core/async/SpinLock.hpp>
+#endif /// !ZERO_CORE_SPIN_LOCK_HPP
+
 // Include STL
 #include <chrono>
 #include <string>
@@ -72,6 +77,10 @@ TEST(zero_async, mutex_lock_test) {
 
 	t1.join();
 	t2.join();
+}
+
+TEST(zero_async, spin_lock_test) {
+	EXPECT_EQ(true, true);
 }
 
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =

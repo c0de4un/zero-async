@@ -84,6 +84,9 @@ elseif ( ZERO_BUILD_TYPE STREQUAL "SHARED" )
         LIBRARY_OUTPUT_DIRECTORY "${ZERO_OUTPUT_DIR}" )
 endif ( ZERO_BUILD_TYPE STREQUAL "STATIC" )
 
+target_include_directories( zero_async PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/lib/core/public" )
+target_include_directories( zero_async PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/lib/${PLATFORM}/public" )
+
 # Link with zero-config
 target_include_directories( zero_async PUBLIC "${ZERO_CONFIG_INCLUDE_DIR}" )
 

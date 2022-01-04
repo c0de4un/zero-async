@@ -25,110 +25,72 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#ifndef ZERO_CORE_I_LOCK_HXX
+#define ZERO_CORE_I_LOCK_HXX
+
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // INCLUDES
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-// HEADER
-#ifndef ZERO_WIN_MUTEX_HPP
-#include "../../../../public/zero/windows/async/WinMutex.hpp"
-#endif /// !ZERO_WIN_MUTEX_HPP
+// Include zero::api
+#ifndef ZERO_API_HPP
+#include <zero/core/cfg/zero_api.hpp>
+#endif /// !ZERO_API_HPP
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// WinMutex
+// TYPES
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 namespace zero
 {
 
-	namespace win
+	namespace core
 	{
 
 		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		// CONSTRUCTOR & DESTRUCTOR
+		// ILock
 		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-		WinMutex::WinMutex()
-			: mHandler(),
-			mWrite()
+		/*!
+		  \brief Thread-lock contract
+
+		  \version 1.0
+		*/
+		class ILock
 		{
-			InitializeCriticalSection(&mHandler);
-		}
 
-		WinMutex::~WinMutex() ZERO_NOEXCEPT
-		{
-			DeleteCriticalSection(&mHandler);
-		}
+		public:
 
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		// IMutex: GETTERS & SETTERS
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-		void* WinMutex::native_handle() ZERO_NOEXCEPT
-		{ return static_cast<void*>(&mHandler); }
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			// DESTRUCTOR
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		// IMutex: METHODS
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			/*!
+			  \brief ILock destructor
 
-		void WinMutex::lock()
-		{
-			mLocked = true;
+			  \throws - no exceptions
+			*/
+			virtual ~ILock() noexcept = default;
 
-			if (mWrite.test_and_set())
-				EnterCriticalSection(&mHandler);
-		}
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-		void WinMutex::lock_shared()
-		{
-			if (mLocked)
-				lock();
-		}
-
-		bool WinMutex::try_lock() ZERO_NOEXCEPT
-		{
-			if (mLocked)
-				return false;
-
-			try { lock(); }
-			catch(...) { return false; }
-
-			return true;
-		}
-
-		bool WinMutex::try_lock_shared() ZERO_NOEXCEPT
-		{
-			if (mLocked)
-				return false;
-
-			try { lock_shared(); }
-			catch(...) { return false; }
-
-			return true;
-		}
-
-		void WinMutex::unlock() ZERO_NOEXCEPT
-		{
-			if (mWrite.test_and_set())
-				LeaveCriticalSection(&mHandler);
-
-			mWrite.clear();
-			mLocked = false;
-		}
-
-		void WinMutex::unlock_shared() ZERO_NOEXCEPT
-		{
-			unlock();
-		}
+		}; /// zero::core::ILock
 
 		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-	}
+	} /// zero::core
 
-}
+} /// zero
+
+using zILock = zero::core::ILock;
+#define ZERO_CORE_I_LOCK_DECL
 
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+
+#endif /// !ZERO_CORE_I_LOCK_HXX

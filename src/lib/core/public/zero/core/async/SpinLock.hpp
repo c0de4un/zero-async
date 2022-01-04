@@ -25,110 +25,104 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#ifndef ZERO_CORE_SPIN_LOCK_HPP
+#define ZERO_CORE_SPIN_LOCK_HPP
+
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // INCLUDES
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-// HEADER
-#ifndef ZERO_WIN_MUTEX_HPP
-#include "../../../../public/zero/windows/async/WinMutex.hpp"
-#endif /// !ZERO_WIN_MUTEX_HPP
+// Include zero::ILock
+#ifndef ZERO_CORE_I_LOCK_HXX
+#include "ILock.hxx"
+#endif /// !ZERO_CORE_I_LOCK_HXX
+
+// Include zero::mutex
+#ifndef ZERO_MUTEX_HPP
+#include <zero/core/cfg/zero_mutex.hpp>
+#endif /// !ZERO_MUTEX_HPP
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// WinMutex
+// TYPES
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 namespace zero
 {
 
-	namespace win
+	namespace core
 	{
 
 		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		// CONSTRUCTOR & DESTRUCTOR
+		// SpinLock
 		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-		WinMutex::WinMutex()
-			: mHandler(),
-			mWrite()
+		/*!
+		  \brief Spin lock implementation
+
+		  \version 1.0
+		*/
+		ZERO_API class SpinLock final : public zILock
 		{
-			InitializeCriticalSection(&mHandler);
-		}
 
-		WinMutex::~WinMutex() ZERO_NOEXCEPT
-		{
-			DeleteCriticalSection(&mHandler);
-		}
+		private:
 
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		// IMutex: GETTERS & SETTERS
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-		void* WinMutex::native_handle() ZERO_NOEXCEPT
-		{ return static_cast<void*>(&mHandler); }
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			// CONSTANTS
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		// IMutex: METHODS
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			static constexpr const unsigned int MAX_SPIN = 240;
 
-		void WinMutex::lock()
-		{
-			mLocked = true;
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			// FIELDS
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-			if (mWrite.test_and_set())
-				EnterCriticalSection(&mHandler);
-		}
+			zMutex* mMutex;
 
-		void WinMutex::lock_shared()
-		{
-			if (mLocked)
-				lock();
-		}
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			// DELETED
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-		bool WinMutex::try_lock() ZERO_NOEXCEPT
-		{
-			if (mLocked)
-				return false;
+			SpinLock(const SpinLock&) = delete;
+			SpinLock(SpinLock&&)      = delete;
 
-			try { lock(); }
-			catch(...) { return false; }
+			SpinLock& operator=(const SpinLock&) = delete;
+			SpinLock& operator=(SpinLock&&)      = delete;
+			
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-			return true;
-		}
+		public:
 
-		bool WinMutex::try_lock_shared() ZERO_NOEXCEPT
-		{
-			if (mLocked)
-				return false;
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-			try { lock_shared(); }
-			catch(...) { return false; }
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			// CONSTRUCTOR & DESTRUCTOR
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-			return true;
-		}
+			explicit SpinLock(zMutex& pMutex);
 
-		void WinMutex::unlock() ZERO_NOEXCEPT
-		{
-			if (mWrite.test_and_set())
-				LeaveCriticalSection(&mHandler);
+			/*!
+			  \brief SpinLock destructor
 
-			mWrite.clear();
-			mLocked = false;
-		}
+			  \throws - no exceptions
+			*/
+			virtual ~SpinLock() noexcept;
 
-		void WinMutex::unlock_shared() ZERO_NOEXCEPT
-		{
-			unlock();
-		}
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+		}; /// zero::core::SpinLock
 
 		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-	}
+	} /// zero::core
 
-}
+} /// zero
 
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+
+#endif /// !ZERO_CORE_SPIN_LOCK_HPP

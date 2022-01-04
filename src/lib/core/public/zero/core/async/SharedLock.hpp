@@ -25,105 +25,91 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
+#ifndef ZERO_CORE_SHARED_LOCK_HPP
+#define ZERO_CORE_SHARED_LOCK_HPP
+
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // INCLUDES
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-// HEADER
-#ifndef ZERO_WIN_MUTEX_HPP
-#include "../../../../public/zero/windows/async/WinMutex.hpp"
-#endif /// !ZERO_WIN_MUTEX_HPP
+// Include zero::ILock
+#ifndef ZERO_CORE_I_LOCK_HXX
+#include "ILock.hxx"
+#endif /// !ZERO_CORE_I_LOCK_HXX
+
+// Include zero::mutex
+#ifndef ZERO_MUTEX_HPP
+#include <zero/core/cfg/zero_mutex.hpp>
+#endif /// !ZERO_MUTEX_HPP
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// WinMutex
+// TYPES
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 namespace zero
 {
 
-	namespace win
+	namespace core
 	{
 
 		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		// CONSTRUCTOR & DESTRUCTOR
+		// SharedLock
 		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-		WinMutex::WinMutex()
-			: mHandler(),
-			mWrite()
+		/*!
+		  \brief Shared lock implementation
+
+		  \version 1.0
+		*/
+		ZERO_API class SharedLock final : public zILock
 		{
-			InitializeCriticalSection(&mHandler);
-		}
 
-		WinMutex::~WinMutex() ZERO_NOEXCEPT
-		{
-			DeleteCriticalSection(&mHandler);
-		}
+		private:
 
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		// IMutex: GETTERS & SETTERS
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-		void* WinMutex::native_handle() ZERO_NOEXCEPT
-		{ return static_cast<void*>(&mHandler); }
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			// FIELDS
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		// IMutex: METHODS
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			zMutex* mMutex;
 
-		void WinMutex::lock()
-		{
-			mLocked = true;
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			// DELETED
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-			if (mWrite.test_and_set())
-				EnterCriticalSection(&mHandler);
-		}
+			SharedLock(const SharedLock&) = delete;
+			SharedLock(SharedLock&&)      = delete;
 
-		void WinMutex::lock_shared()
-		{
-			if (mLocked)
-				lock();
-		}
+			SharedLock& operator=(const SharedLock&) = delete;
+			SharedLock& operator=(SharedLock&&)      = delete;
 
-		bool WinMutex::try_lock() ZERO_NOEXCEPT
-		{
-			if (mLocked)
-				return false;
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-			try { lock(); }
-			catch(...) { return false; }
+		public:
 
-			return true;
-		}
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-		bool WinMutex::try_lock_shared() ZERO_NOEXCEPT
-		{
-			if (mLocked)
-				return false;
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			// CONSTRUCTOR & DESTRUCTOR
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-			try { lock_shared(); }
-			catch(...) { return false; }
+			explicit SharedLock(zMutex& mutex);
 
-			return true;
-		}
+			/*!
+			  \brief SharedLock destructor
 
-		void WinMutex::unlock() ZERO_NOEXCEPT
-		{
-			if (mWrite.test_and_set())
-				LeaveCriticalSection(&mHandler);
+			  \throws - no exceptions
+			*/
+			virtual ~SharedLock() noexcept;
 
-			mWrite.clear();
-			mLocked = false;
-		}
+			// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-		void WinMutex::unlock_shared() ZERO_NOEXCEPT
-		{
-			unlock();
-		}
+		}; /// zero::core::SharedLock
 
 		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -132,3 +118,5 @@ namespace zero
 }
 
 // = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+
+#endif /// !ZERO_CORE_SHARED_LOCK_HPP

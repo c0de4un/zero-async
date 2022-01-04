@@ -6,6 +6,7 @@
 
 set( ZERO_ASYNC_WINDOWS_PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/lib/windows/public/zero/zero/windows/" )
 set( ZERO_ASYNC_HEADERS ${ZERO_ASYNC_HEADERS}
+	"${ZERO_ASYNC_WINDOWS_PUBLIC}cfg/zero_windows.hpp"
 	"${ZERO_ASYNC_WINDOWS_PUBLIC}async/WinMutex.hpp" )
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

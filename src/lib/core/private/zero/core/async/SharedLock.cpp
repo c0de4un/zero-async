@@ -32,18 +32,18 @@
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // HEADER
-#ifndef ZERO_WIN_MUTEX_HPP
-#include "../../../../public/zero/windows/async/WinMutex.hpp"
-#endif /// !ZERO_WIN_MUTEX_HPP
+#ifndef ZERO_CORE_SHARED_LOCK_HPP
+#include "../../../../public/zero/core/async/SharedLock.hpp"
+#endif /// !ZERO_CORE_SHARED_LOCK_HPP
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// WinMutex
+// SharedLock
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 namespace zero
 {
 
-	namespace win
+	namespace core
 	{
 
 		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -52,77 +52,16 @@ namespace zero
 		// CONSTRUCTOR & DESTRUCTOR
 		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-		WinMutex::WinMutex()
-			: mHandler(),
-			mWrite()
+		SharedLock::SharedLock( zMutex& mutex )
+			: mMutex(&mutex)
 		{
-			InitializeCriticalSection(&mHandler);
+			mMutex->lock_shared();
 		}
 
-		WinMutex::~WinMutex() ZERO_NOEXCEPT
+		SharedLock::~SharedLock() noexcept
 		{
-			DeleteCriticalSection(&mHandler);
-		}
-
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		// IMutex: GETTERS & SETTERS
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-		void* WinMutex::native_handle() ZERO_NOEXCEPT
-		{ return static_cast<void*>(&mHandler); }
-
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		// IMutex: METHODS
-		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-		void WinMutex::lock()
-		{
-			mLocked = true;
-
-			if (mWrite.test_and_set())
-				EnterCriticalSection(&mHandler);
-		}
-
-		void WinMutex::lock_shared()
-		{
-			if (mLocked)
-				lock();
-		}
-
-		bool WinMutex::try_lock() ZERO_NOEXCEPT
-		{
-			if (mLocked)
-				return false;
-
-			try { lock(); }
-			catch(...) { return false; }
-
-			return true;
-		}
-
-		bool WinMutex::try_lock_shared() ZERO_NOEXCEPT
-		{
-			if (mLocked)
-				return false;
-
-			try { lock_shared(); }
-			catch(...) { return false; }
-
-			return true;
-		}
-
-		void WinMutex::unlock() ZERO_NOEXCEPT
-		{
-			if (mWrite.test_and_set())
-				LeaveCriticalSection(&mHandler);
-
-			mWrite.clear();
-			mLocked = false;
-		}
-
-		void WinMutex::unlock_shared() ZERO_NOEXCEPT
-		{
-			unlock();
+			try { mMutex->unlock_shared(); }
+			catch(...) { /** void */ }
 		}
 
 		// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
